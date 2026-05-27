@@ -49,7 +49,7 @@
                     <div class="text">{{ a.beschreibung }}</div>
                     <div class="meta">
                         {% if a.zugewiesen_an %}👤 {{ a.zugewiesen_an }}{% endif %}
-                        {% if a.erledigt %} · ✓ Erledigt{% endif %}
+                        {% if a.erledigt %} · ✓ Erledigt von {{ a.erledigt_von }} am {{ a.erledigt_am.strftime('%d.%m.%Y %H:%M') }}{% endif %}
                     </div>
                     {% if a.bild_pfad %}
                     <div class="bild">
