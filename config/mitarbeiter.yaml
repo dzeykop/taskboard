@@ -2,14 +2,3 @@ mitarbeiter:
   - name: Jozef Frisik
     telegram_id: 724906623
     abteilung: Wartung
-  - name: Milan Blaho
-    telegram_id: 987654321
-    abteilung: Wartung
-  - name: Zoli Vajnai
-    telegram_id: 123456789
-    abteilung: Wartung
-  - name: Instandhaltung
-    telegram_id: 123456789
-    abteilung: Wartung
-
-
