@@ -1,0 +1,13 @@
+[Unit]
+Description=TaskBoard Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/taskboard/bot
+ExecStart=/opt/taskboard/venv/bin/python main.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
