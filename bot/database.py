@@ -15,6 +15,8 @@ class Aufgabe(Base):
     erledigt = Column(Boolean, default=False)
     erstellt_am = Column(DateTime, default=datetime.now)
     bild_pfad = Column(String, nullable=True)
+    erledigt_am = Column(DateTime, nullable=True)
+    erledigt_von = Column(String, nullable=True)
 
 engine = create_engine('sqlite:////opt/taskboard/taskboard.db')
 Base.metadata.create_all(engine)
