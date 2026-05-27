@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskBoard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        header { background: #1a1a2e; color: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 20px; }
+        header a { color: #93c5fd; text-decoration: none; font-size: 14px; }
+        .container { max-width: 1000px; margin: 32px auto; padding: 0 16px; }
+        .filter { display: flex; gap: 8px; margin-bottom: 24px; }
+        .filter a { padding: 8px 16px; border-radius: 8px; text-decoration: none; background: white; color: #333; border: 1px solid #ddd; font-size: 14px; }
+        .filter a.active { background: #2563eb; color: white; border-color: #2563eb; }
+        .aufgabe { background: white; border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .aufgabe.erledigt { opacity: 0.5; }
+        .aufgabe-info { flex: 1; }
+        .aufgabe-info .id { font-size: 12px; color: #888; margin-bottom: 4px; }
+        .aufgabe-info .text { font-size: 15px; color: #1a1a2e; font-weight: 500; }
+        .aufgabe-info .meta { font-size: 13px; color: #666; margin-top: 4px; }
+        .aufgabe-info .bild { margin-top: 8px; }
+        .aufgabe-info .bild img { max-width: 200px; border-radius: 6px; }
+        .aktionen { display: flex; gap: 8px; }
+        .btn { padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500; }
+        .btn-erledigt { background: #22c55e; color: white; }
+        .btn-loeschen { background: #ef4444; color: white; }
+        .leer { text-align: center; color: #888; padding: 48px; background: white; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📋 TaskBoard</h1>
+        <a href="/logout">Abmelden</a>
+    </header>
+    <div class="container">
+        <div class="filter">
+            <a href="/?filter=offen" class="{{ 'active' if filter_status == 'offen' }}">Offen</a>
+            <a href="/?filter=erledigt" class="{{ 'active' if filter_status == 'erledigt' }}">Erledigt</a>
+            <a href="/?filter=alle" class="{{ 'active' if filter_status == 'alle' }}">Alle</a>
+        </div>
+
+        {% if aufgaben %}
+            {% for a in aufgaben %}
+            <div class="aufgabe {{ 'erledigt' if a.erledigt }}">
+                <div class="aufgabe-info">
+                    <div class="id">#{{ a.id }} · {{ a.erstellt_am.strftime('%d.%m.%Y %H:%M') }}</div>
+                    <div class="text">{{ a.beschreibung }}</div>
+                    <div class="meta">
+                        {% if a.zugewiesen_an %}👤 {{ a.zugewiesen_an }}{% endif %}
+                        {% if a.erledigt %} · ✓ Erledigt{% endif %}
+                    </div>
+                    {% if a.bild_pfad %}
+                    <div class="bild">
+                        <img src="/uploads/{{ a.bild_pfad }}" alt="Bild">
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="aktionen">
+                    {% if not a.erledigt %}
+                    <a href="/erledigt/{{ a.id }}" class="btn btn-erledigt">✓ Erledigt</a>
+                    {% endif %}
+                    <a href="/loeschen/{{ a.id }}" class="btn btn-loeschen">Löschen</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="leer">Keine Aufgaben vorhanden.</div>
+        {% endif %}
+    </div>
+</body>
+</html>
