@@ -3,6 +3,7 @@ import yaml
 from telegram import Update
 from telegram.ext import ContextTypes
 from database import Aufgabe, session
+from datetime import datetime
 
 def lade_mitarbeiter():
     with open('/opt/taskboard/config/mitarbeiter.yaml', 'r') as f:
