@@ -55,6 +55,8 @@ async def erledigt(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f"Aufgabe #{aufgabe_id} nicht gefunden!")
             return
         aufgabe.erledigt = True
+        aufgabe.erledigt_am = datetime.now()
+        aufgabe.erledigt_von = update.effective_user.first_name
         session.commit()
         await update.message.reply_text(f"✓ Aufgabe #{aufgabe_id} als erledigt markiert!")
     except ValueError:
