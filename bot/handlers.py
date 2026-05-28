@@ -24,8 +24,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Befehle:\n"
         f"/aufgabe [Text] [@name] - Neue Aufgabe\n"
         f"/reparatur [Text] [@name] - Neue Reparatur\n"
-        f"/fertig [ID] - Als erledigt markieren\n"
-        f"/nichtfertig [ID] - Als nicht erledigt markieren\n"
+        f"/erledigt [ID] - Als erledigt markieren\n"
+        f"/nichterledigt [ID] - Als nicht erledigt markieren\n"
         f"/aufgaben - Alle offenen Aufgaben"
     )
 
@@ -57,9 +57,9 @@ async def neue_reparatur(update: Update, context: ContextTypes.DEFAULT_TYPE):
         antwort += f"\nZugewiesen an: {zugewiesen}"
     await update.message.reply_text(antwort)
 
-async def fertig(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def erledigt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Verwendung: /fertig 5")
+        await update.message.reply_text("Verwendung: /erledigt 5")
         return
     try:
         aufgabe_id = int(context.args[0])
@@ -75,9 +75,9 @@ async def fertig(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except ValueError:
         await update.message.reply_text("Bitte eine gültige Nummer angeben!")
 
-async def nicht_fertig(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def nicht_erledigt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Verwendung: /nichtfertig 5")
+        await update.message.reply_text("Verwendung: /nichterledigt 5")
         return
     try:
         aufgabe_id = int(context.args[0])
