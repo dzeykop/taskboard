@@ -10,10 +10,35 @@
         header { background: #1a1a2e; color: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 20px; }
         header a { color: #93c5fd; text-decoration: none; font-size: 14px; }
-        .container { max-width: 1000px; margin: 32px auto; padding: 0 16px; }
-        .filter { display: flex; gap: 8px; margin-bottom: 24px; }
-        .filter a { padding: 8px 16px; border-radius: 8px; text-decoration: none; background: white; color: #333; border: 1px solid #ddd; font-size: 14px; }
+        .container { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
+        .filter { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+        .filter a {
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+            transition: all 0.2s;
+        }
+        .filter a:hover { border-color: #2563eb; color: #2563eb; }
         .filter a.active { background: #2563eb; color: white; border-color: #2563eb; }
+        .filter a .count {
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .filter a .label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+        .filter a.active .label { opacity: 1; }
         .aufgabe { background: white; border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
         .aufgabe.erledigt { opacity: 0.5; }
         .aufgabe.reparatur { border-left: 4px solid #f97316; }
@@ -38,10 +63,26 @@
     </header>
     <div class="container">
         <div class="filter">
-            <a href="/?filter=offen" class="{{ 'active' if filter_status == 'offen' }}">Offen</a>
-            <a href="/?filter=reparatur" class="{{ 'active' if filter_status == 'reparatur' }}">🔧 Reparatur</a>
-            <a href="/?filter=erledigt" class="{{ 'active' if filter_status == 'erledigt' }}">Erledigt</a>
-            <a href="/?filter=alle" class="{{ 'active' if filter_status == 'alle' }}">Alle</a>
+            <a href="/?filter=offen" class="{{ 'active' if filter_status == 'offen' }}">
+                <span class="count">{{ counts.offen }}</span>
+                <span class="label">Offen</span>
+            </a>
+            <a href="/?filter=aufgaben" class="{{ 'active' if filter_status == 'aufgaben' }}">
+                <span class="count">{{ counts.aufgaben }}</span>
+                <span class="label">📌 Aufgaben</span>
+            </a>
+            <a href="/?filter=reparatur" class="{{ 'active' if filter_status == 'reparatur' }}">
+                <span class="count">{{ counts.reparatur }}</span>
+                <span class="label">🔧 Reparatur</span>
+            </a>
+            <a href="/?filter=erledigt" class="{{ 'active' if filter_status == 'erledigt' }}">
+                <span class="count">{{ counts.erledigt }}</span>
+                <span class="label">✓ Erledigt</span>
+            </a>
+            <a href="/?filter=alle" class="{{ 'active' if filter_status == 'alle' }}">
+                <span class="count">{{ counts.alle }}</span>
+                <span class="label">Alle</span>
+            </a>
         </div>
 
         {% if aufgaben %}
