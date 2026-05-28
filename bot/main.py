@@ -12,8 +12,12 @@ logging.basicConfig(
 
 from handlers import (start, aufgabe_start, aufgabe_text, aufgabe_name,
                       reparatur_start, reparatur_text, reparatur_name,
-                      abbrechen, erledigt, nicht_erledigt, aufgaben_liste,
-                      AUFGABE_TEXT, AUFGABE_NAME, REPARATUR_TEXT, REPARATUR_NAME)
+                      erledigt_start, erledigt_wahl,
+                      nichterledigt_start, nichterledigt_wahl,
+                      abbrechen, aufgaben_liste,
+                      AUFGABE_TEXT, AUFGABE_NAME,
+                      REPARATUR_TEXT, REPARATUR_NAME,
+                      ERLEDIGT_WAHL, NICHTERLEDIGT_WAHL)
 
 def main():
     token = os.getenv('TELEGRAM_TOKEN')
@@ -41,11 +45,27 @@ def main():
         fallbacks=[CommandHandler("abbrechen", abbrechen)]
     )
 
+    erledigt_conv = ConversationHandler(
+        entry_points=[CommandHandler("erledigt", erledigt_start)],
+        states={
+            ERLEDIGT_WAHL: [CallbackQueryHandler(erledigt_wahl, pattern="^erl_")],
+        },
+        fallbacks=[CommandHandler("abbrechen", abbrechen)]
+    )
+
+    nichterledigt_conv = ConversationHandler(
+        entry_points=[CommandHandler("nichterledigt", nichterledigt_start)],
+        states={
+            NICHTERLEDIGT_WAHL: [CallbackQueryHandler(nichterledigt_wahl, pattern="^nierl_")],
+        },
+        fallbacks=[CommandHandler("abbrechen", abbrechen)]
+    )
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(aufgabe_conv)
     app.add_handler(reparatur_conv)
-    app.add_handler(CommandHandler("erledigt", erledigt))
-    app.add_handler(CommandHandler("nichterledigt", nicht_erledigt))
+    app.add_handler(erledigt_conv)
+    app.add_handler(nichterledigt_conv)
     app.add_handler(CommandHandler("aufgaben", aufgaben_liste))
 
     print("Bot läuft...")
