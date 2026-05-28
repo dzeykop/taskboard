@@ -2,8 +2,8 @@ import os
 import sys
 sys.path.insert(0, '/opt/taskboard/bot')
 
-from flask import render_template, request, redirect, url_for, flash, current_app
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from database import Aufgabe, session
 
 def register_routes(app, login_manager):
@@ -40,6 +40,8 @@ def register_routes(app, login_manager):
             aufgaben = session.query(Aufgabe).order_by(Aufgabe.erstellt_am.desc()).all()
         elif filter_status == 'erledigt':
             aufgaben = session.query(Aufgabe).filter_by(erledigt=True).order_by(Aufgabe.erstellt_am.desc()).all()
+        elif filter_status == 'reparatur':
+            aufgaben = session.query(Aufgabe).filter_by(kategorie='reparatur', erledigt=False).order_by(Aufgabe.erstellt_am.desc()).all()
         else:
             aufgaben = session.query(Aufgabe).filter_by(erledigt=False).order_by(Aufgabe.erstellt_am.desc()).all()
         return render_template('dashboard.html', aufgaben=aufgaben, filter_status=filter_status)
