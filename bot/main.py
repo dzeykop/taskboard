@@ -1,7 +1,7 @@
 import os
 import logging
 from dotenv import load_dotenv
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler
 
 load_dotenv('/opt/taskboard/.env')
 
@@ -10,7 +10,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-from handlers import start, menu, menu_callback, neue_aufgabe, neue_reparatur, erledigt, nicht_erledigt, aufgaben_liste
+from handlers import start, neue_aufgabe, neue_reparatur, erledigt, nicht_erledigt, aufgaben_liste
 
 def main():
     token = os.getenv('TELEGRAM_TOKEN')
@@ -21,13 +21,11 @@ def main():
     app = Application.builder().token(token).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("menu", menu))
     app.add_handler(CommandHandler("aufgabe", neue_aufgabe))
     app.add_handler(CommandHandler("reparatur", neue_reparatur))
     app.add_handler(CommandHandler("erledigt", erledigt))
     app.add_handler(CommandHandler("nichterledigt", nicht_erledigt))
     app.add_handler(CommandHandler("aufgaben", aufgaben_liste))
-    app.add_handler(CallbackQueryHandler(menu_callback))
 
     print("Bot läuft...")
     app.run_polling()
