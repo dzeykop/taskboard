@@ -6,6 +6,8 @@ from database import Aufgabe, session
 
 AUFGABE_TEXT, AUFGABE_NAME = range(2)
 REPARATUR_TEXT, REPARATUR_NAME = range(2, 4)
+ERLEDIGT_WAHL = range(4, 5)
+NICHTERLEDIGT_WAHL = range(5, 6)
 
 def lade_mitarbeiter():
     with open('/opt/taskboard/config/mitarbeiter.yaml', 'r') as f:
@@ -26,6 +28,28 @@ def mitarbeiter_buttons():
     buttons.append([InlineKeyboardButton("Niemand", callback_data="name_keine")])
     return InlineKeyboardMarkup(buttons)
 
+def offene_aufgaben_buttons():
+    aufgaben = session.query(Aufgabe).filter_by(erledigt=False).all()
+    if not aufgaben:
+        return None
+    buttons = []
+    for a in aufgaben:
+        emoji = "🔧" if a.kategorie == 'reparatur' else "📌"
+        label = f"{emoji} #{a.id} {a.beschreibung[:30]}"
+        buttons.append([InlineKeyboardButton(label, callback_data=f"erl_{a.id}")])
+    return InlineKeyboardMarkup(buttons)
+
+def erledigte_aufgaben_buttons():
+    aufgaben = session.query(Aufgabe).filter_by(erledigt=True).all()
+    if not aufgaben:
+        return None
+    buttons = []
+    for a in aufgaben:
+        emoji = "🔧" if a.kategorie == 'reparatur' else "📌"
+        label = f"{emoji} #{a.id} {a.beschreibung[:30]}"
+        buttons.append([InlineKeyboardButton(label, callback_data=f"nierl_{a.id}")])
+    return InlineKeyboardMarkup(buttons)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     await update.message.reply_text(
@@ -34,8 +58,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Befehle:\n"
         f"/aufgabe - Neue Aufgabe erstellen\n"
         f"/reparatur - Neue Reparatur erstellen\n"
-        f"/erledigt [ID] - Als erledigt markieren\n"
-        f"/nichterledigt [ID] - Als nicht erledigt markieren\n"
+        f"/erledigt - Aufgabe als erledigt markieren\n"
+        f"/nichterledigt - Aufgabe zurücksetzen\n"
         f"/aufgaben - Alle offenen Aufgaben"
     )
 
@@ -91,46 +115,53 @@ async def reparatur_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(antwort)
     return ConversationHandler.END
 
-async def abbrechen(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Abgebrochen.")
-    return ConversationHandler.END
+# --- ERLEDIGT ---
+async def erledigt_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    buttons = offene_aufgaben_buttons()
+    if not buttons:
+        await update.message.reply_text("Keine offenen Aufgaben!")
+        return ConversationHandler.END
+    await update.message.reply_text("Welche Aufgabe ist erledigt?", reply_markup=buttons)
+    return ERLEDIGT_WAHL
 
-# --- ERLEDIGT / NICHT ERLEDIGT ---
-async def erledigt(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Verwendung: /erledigt 5")
-        return
-    try:
-        aufgabe_id = int(context.args[0])
-        aufgabe = session.get(Aufgabe, aufgabe_id)
-        if not aufgabe:
-            await update.message.reply_text(f"Aufgabe #{aufgabe_id} nicht gefunden!")
-            return
+async def erledigt_wahl(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    aufgabe_id = int(query.data.replace("erl_", ""))
+    aufgabe = session.get(Aufgabe, aufgabe_id)
+    if aufgabe:
         aufgabe.erledigt = True
         aufgabe.erledigt_am = datetime.now()
-        aufgabe.erledigt_von = update.effective_user.first_name
+        aufgabe.erledigt_von = query.from_user.first_name
         session.commit()
-        await update.message.reply_text(f"✓ Aufgabe #{aufgabe_id} als erledigt markiert!")
-    except ValueError:
-        await update.message.reply_text("Bitte eine gültige Nummer angeben!")
+        await query.edit_message_text(f"✓ Aufgabe #{aufgabe_id} als erledigt markiert!")
+    return ConversationHandler.END
 
-async def nicht_erledigt(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Verwendung: /nichterledigt 5")
-        return
-    try:
-        aufgabe_id = int(context.args[0])
-        aufgabe = session.get(Aufgabe, aufgabe_id)
-        if not aufgabe:
-            await update.message.reply_text(f"Aufgabe #{aufgabe_id} nicht gefunden!")
-            return
+# --- NICHT ERLEDIGT ---
+async def nichterledigt_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    buttons = erledigte_aufgaben_buttons()
+    if not buttons:
+        await update.message.reply_text("Keine erledigten Aufgaben!")
+        return ConversationHandler.END
+    await update.message.reply_text("Welche Aufgabe zurücksetzen?", reply_markup=buttons)
+    return NICHTERLEDIGT_WAHL
+
+async def nichterledigt_wahl(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    aufgabe_id = int(query.data.replace("nierl_", ""))
+    aufgabe = session.get(Aufgabe, aufgabe_id)
+    if aufgabe:
         aufgabe.erledigt = False
         aufgabe.erledigt_am = None
         aufgabe.erledigt_von = None
         session.commit()
-        await update.message.reply_text(f"↩ Aufgabe #{aufgabe_id} wieder auf offen gesetzt!")
-    except ValueError:
-        await update.message.reply_text("Bitte eine gültige Nummer angeben!")
+        await query.edit_message_text(f"↩ Aufgabe #{aufgabe_id} wieder auf offen gesetzt!")
+    return ConversationHandler.END
+
+async def abbrechen(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Abgebrochen.")
+    return ConversationHandler.END
 
 async def aufgaben_liste(update: Update, context: ContextTypes.DEFAULT_TYPE):
     aufgaben = session.query(Aufgabe).filter_by(erledigt=False).all()
