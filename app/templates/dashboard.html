@@ -28,16 +28,8 @@
         }
         .filter a:hover { border-color: #2563eb; color: #2563eb; }
         .filter a.active { background: #2563eb; color: white; border-color: #2563eb; }
-        .filter a .count {
-            font-size: 22px;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-        .filter a .label {
-            font-size: 12px;
-            opacity: 0.8;
-            margin-top: 2px;
-        }
+        .filter a .count { font-size: 22px; font-weight: 700; line-height: 1.2; }
+        .filter a .label { font-size: 12px; opacity: 0.8; margin-top: 2px; }
         .filter a.active .label { opacity: 1; }
         .aufgabe { background: white; border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
         .aufgabe.erledigt { opacity: 0.5; }
@@ -59,7 +51,15 @@
 <body>
     <header>
         <h1>📋 TaskBoard</h1>
-        <a href="/logout">Abmelden</a>
+        <div style="display:flex;align-items:center;gap:16px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
+                <span id="auto-label">Auto-Refresh: AN</span>
+                <div id="toggle" onclick="toggleRefresh()" style="width:40px;height:22px;background:#22c55e;border-radius:11px;position:relative;cursor:pointer;transition:background 0.3s;">
+                    <div id="toggle-knob" style="width:18px;height:18px;background:white;border-radius:50%;position:absolute;top:2px;left:20px;transition:left 0.3s;"></div>
+                </div>
+            </label>
+            <a href="/logout">Abmelden</a>
+        </div>
     </header>
     <div class="container">
         <div class="filter">
@@ -119,5 +119,28 @@
             <div class="leer">Keine Aufgaben vorhanden.</div>
         {% endif %}
     </div>
+<script>
+    let refreshOn = true;
+    let timer = setTimeout(doRefresh, 60000);
+
+    function doRefresh() {
+        if (refreshOn) location.reload();
+    }
+
+    function toggleRefresh() {
+        refreshOn = !refreshOn;
+        clearTimeout(timer);
+        if (refreshOn) {
+            timer = setTimeout(doRefresh, 60000);
+            document.getElementById('toggle').style.background = '#22c55e';
+            document.getElementById('toggle-knob').style.left = '20px';
+            document.getElementById('auto-label').textContent = 'Auto-Refresh: AN';
+        } else {
+            document.getElementById('toggle').style.background = '#888';
+            document.getElementById('toggle-knob').style.left = '2px';
+            document.getElementById('auto-label').textContent = 'Auto-Refresh: AUS';
+        }
+    }
+</script>
 </body>
 </html>
