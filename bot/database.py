@@ -12,6 +12,7 @@ class Aufgabe(Base):
     id = Column(Integer, primary_key=True)
     beschreibung = Column(String, nullable=False)
     zugewiesen_an = Column(String, nullable=True)
+    kategorie = Column(String, default='aufgabe')
     erledigt = Column(Boolean, default=False)
     erstellt_am = Column(DateTime, default=datetime.now)
     bild_pfad = Column(String, nullable=True)
