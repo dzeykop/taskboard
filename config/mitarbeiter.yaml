@@ -1,10 +1,10 @@
 mitarbeiter:
-  - name: Jozef Frisik
+  - name: Jozef
     telegram_id: 724906623
     abteilung: Wartung
-  - name: Instandhaltung
+  - name: Instand.
     telegram_id: 1889729647
     abteilung: Wartung
-  - name: Zoli Vajnai
+  - name: Zoli
     telegram_id: 6964409866
     abteilung: Wartung
