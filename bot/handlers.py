@@ -1,7 +1,7 @@
 import yaml
 from datetime import datetime
-from telegram import Update
-from telegram.ext import ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes, CallbackQueryHandler
 from database import Aufgabe, session
 
 def lade_mitarbeiter():
@@ -22,12 +22,56 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Hallo {user.first_name}!\n"
         f"Deine Telegram-ID: {user.id}\n\n"
         f"Befehle:\n"
+        f"/menu - Hauptmenü\n"
         f"/aufgabe [Text] [@name] - Neue Aufgabe\n"
         f"/reparatur [Text] [@name] - Neue Reparatur\n"
         f"/erledigt [ID] - Als erledigt markieren\n"
         f"/nichterledigt [ID] - Als nicht erledigt markieren\n"
         f"/aufgaben - Alle offenen Aufgaben"
     )
+
+async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [
+            InlineKeyboardButton("📌 Neue Aufgabe", callback_data="menu_aufgabe"),
+            InlineKeyboardButton("🔧 Neue Reparatur", callback_data="menu_reparatur")
+        ],
+        [
+            InlineKeyboardButton("✓ Erledigt", callback_data="menu_erledigt"),
+            InlineKeyboardButton("↩ Nicht erledigt", callback_data="menu_nichterledigt")
+        ],
+        [
+            InlineKeyboardButton("📋 Offene Aufgaben", callback_data="menu_liste")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Was möchtest du tun?", reply_markup=reply_markup)
+
+async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "menu_aufgabe":
+        await query.edit_message_text("📌 Neue Aufgabe:\nSchreib: /aufgabe [Text] [@name]\nBeispiel: /aufgabe Pumpe prüfen @max")
+    elif query.data == "menu_reparatur":
+        await query.edit_message_text("🔧 Neue Reparatur:\nSchreib: /reparatur [Text] [@name]\nBeispiel: /reparatur Pumpe defekt @max")
+    elif query.data == "menu_erledigt":
+        await query.edit_message_text("✓ Aufgabe erledigen:\nSchreib: /erledigt [ID]\nBeispiel: /erledigt 5")
+    elif query.data == "menu_nichterledigt":
+        await query.edit_message_text("↩ Aufgabe zurücksetzen:\nSchreib: /nichterledigt [ID]\nBeispiel: /nichterledigt 5")
+    elif query.data == "menu_liste":
+        aufgaben = session.query(Aufgabe).filter_by(erledigt=False).all()
+        if not aufgaben:
+            await query.edit_message_text("Keine offenen Aufgaben!")
+            return
+        text = "📋 Offene Aufgaben:\n\n"
+        for a in aufgaben:
+            emoji = "🔧" if a.kategorie == 'reparatur' else "📌"
+            text += f"{emoji} #{a.id} {a.beschreibung}"
+            if a.zugewiesen_an:
+                text += f" → {a.zugewiesen_an}"
+            text += "\n"
+        await query.edit_message_text(text)
 
 async def neue_aufgabe(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
