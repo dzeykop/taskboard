@@ -36,15 +36,27 @@ def register_routes(app, login_manager):
     @login_required
     def dashboard():
         filter_status = request.args.get('filter', 'offen')
+
+        counts = {
+            'offen': session.query(Aufgabe).filter_by(erledigt=False).count(),
+            'aufgaben': session.query(Aufgabe).filter_by(erledigt=False, kategorie='aufgabe').count(),
+            'reparatur': session.query(Aufgabe).filter_by(erledigt=False, kategorie='reparatur').count(),
+            'erledigt': session.query(Aufgabe).filter_by(erledigt=True).count(),
+            'alle': session.query(Aufgabe).count(),
+        }
+
         if filter_status == 'alle':
             aufgaben = session.query(Aufgabe).order_by(Aufgabe.erstellt_am.desc()).all()
         elif filter_status == 'erledigt':
             aufgaben = session.query(Aufgabe).filter_by(erledigt=True).order_by(Aufgabe.erstellt_am.desc()).all()
         elif filter_status == 'reparatur':
             aufgaben = session.query(Aufgabe).filter_by(kategorie='reparatur', erledigt=False).order_by(Aufgabe.erstellt_am.desc()).all()
+        elif filter_status == 'aufgaben':
+            aufgaben = session.query(Aufgabe).filter_by(kategorie='aufgabe', erledigt=False).order_by(Aufgabe.erstellt_am.desc()).all()
         else:
             aufgaben = session.query(Aufgabe).filter_by(erledigt=False).order_by(Aufgabe.erstellt_am.desc()).all()
-        return render_template('dashboard.html', aufgaben=aufgaben, filter_status=filter_status)
+
+        return render_template('dashboard.html', aufgaben=aufgaben, filter_status=filter_status, counts=counts)
 
     @app.route('/erledigt/<int:aufgabe_id>')
     @login_required
