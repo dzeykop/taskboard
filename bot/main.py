@@ -1,7 +1,7 @@
 import os
 import logging
 from dotenv import load_dotenv
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler
 
 load_dotenv('/opt/taskboard/.env')
 
@@ -10,7 +10,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-from handlers import start, neue_aufgabe, erledigt, aufgaben_liste
+from handlers import start, neue_aufgabe, neue_reparatur, erledigt, nicht_erledigt, aufgaben_liste
 
 def main():
     token = os.getenv('TELEGRAM_TOKEN')
@@ -22,7 +22,9 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("aufgabe", neue_aufgabe))
+    app.add_handler(CommandHandler("reparatur", neue_reparatur))
     app.add_handler(CommandHandler("erledigt", erledigt))
+    app.add_handler(CommandHandler("nichterledigt", nicht_erledigt))
     app.add_handler(CommandHandler("aufgaben", aufgaben_liste))
 
     print("Bot läuft...")
