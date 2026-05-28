@@ -1,20 +1,30 @@
 import yaml
 from datetime import datetime
-from telegram import Update
-from telegram.ext import ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes, ConversationHandler
 from database import Aufgabe, session
+
+AUFGABE_TEXT, AUFGABE_NAME = range(2)
+REPARATUR_TEXT, REPARATUR_NAME = range(2, 4)
 
 def lade_mitarbeiter():
     with open('/opt/taskboard/config/mitarbeiter.yaml', 'r') as f:
         return yaml.safe_load(f)['mitarbeiter']
 
-def finde_zuweisung(text):
+def mitarbeiter_buttons():
     mitarbeiter = lade_mitarbeiter()
-    for m in mitarbeiter:
-        vorname = m['name'].split()[0].lower()
-        if f"@{vorname}" in text.lower():
-            return m['name'], text.replace(f"@{vorname}", "").strip()
-    return None, text
+    buttons = []
+    row = []
+    for i, m in enumerate(mitarbeiter):
+        vorname = m['name'].split()[0]
+        row.append(InlineKeyboardButton(vorname, callback_data=f"name_{m['name']}"))
+        if len(row) == 2:
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+    buttons.append([InlineKeyboardButton("Niemand", callback_data="name_keine")])
+    return InlineKeyboardMarkup(buttons)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -22,41 +32,70 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Hallo {user.first_name}!\n"
         f"Deine Telegram-ID: {user.id}\n\n"
         f"Befehle:\n"
-        f"/aufgabe [Text] [@name] - Neue Aufgabe\n"
-        f"/reparatur [Text] [@name] - Neue Reparatur\n"
+        f"/aufgabe - Neue Aufgabe erstellen\n"
+        f"/reparatur - Neue Reparatur erstellen\n"
         f"/erledigt [ID] - Als erledigt markieren\n"
         f"/nichterledigt [ID] - Als nicht erledigt markieren\n"
         f"/aufgaben - Alle offenen Aufgaben"
     )
 
-async def neue_aufgabe(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Verwendung: /aufgabe Pumpe prüfen @max")
-        return
-    text = ' '.join(context.args)
-    zugewiesen, text = finde_zuweisung(text)
-    aufgabe = Aufgabe(beschreibung=text, zugewiesen_an=zugewiesen, kategorie='aufgabe')
+# --- AUFGABE ---
+async def aufgabe_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📌 Beschreibe die Aufgabe:")
+    return AUFGABE_TEXT
+
+async def aufgabe_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['aufgabe_text'] = update.message.text
+    context.user_data['aufgabe_kategorie'] = 'aufgabe'
+    await update.message.reply_text("👤 Wer soll das machen?", reply_markup=mitarbeiter_buttons())
+    return AUFGABE_NAME
+
+async def aufgabe_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    zugewiesen = None if query.data == "name_keine" else query.data.replace("name_", "")
+    text = context.user_data['aufgabe_text']
+    kategorie = context.user_data['aufgabe_kategorie']
+    aufgabe = Aufgabe(beschreibung=text, zugewiesen_an=zugewiesen, kategorie=kategorie)
     session.add(aufgabe)
     session.commit()
     antwort = f"✓ Aufgabe #{aufgabe.id} erstellt: {text}"
     if zugewiesen:
         antwort += f"\nZugewiesen an: {zugewiesen}"
-    await update.message.reply_text(antwort)
+    await query.edit_message_text(antwort)
+    return ConversationHandler.END
 
-async def neue_reparatur(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Verwendung: /reparatur Pumpe defekt @max")
-        return
-    text = ' '.join(context.args)
-    zugewiesen, text = finde_zuweisung(text)
-    aufgabe = Aufgabe(beschreibung=text, zugewiesen_an=zugewiesen, kategorie='reparatur')
+# --- REPARATUR ---
+async def reparatur_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🔧 Beschreibe die Reparatur:")
+    return REPARATUR_TEXT
+
+async def reparatur_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['aufgabe_text'] = update.message.text
+    context.user_data['aufgabe_kategorie'] = 'reparatur'
+    await update.message.reply_text("👤 Wer soll das machen?", reply_markup=mitarbeiter_buttons())
+    return REPARATUR_NAME
+
+async def reparatur_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    zugewiesen = None if query.data == "name_keine" else query.data.replace("name_", "")
+    text = context.user_data['aufgabe_text']
+    kategorie = context.user_data['aufgabe_kategorie']
+    aufgabe = Aufgabe(beschreibung=text, zugewiesen_an=zugewiesen, kategorie=kategorie)
     session.add(aufgabe)
     session.commit()
     antwort = f"🔧 Reparatur #{aufgabe.id} erstellt: {text}"
     if zugewiesen:
         antwort += f"\nZugewiesen an: {zugewiesen}"
-    await update.message.reply_text(antwort)
+    await query.edit_message_text(antwort)
+    return ConversationHandler.END
 
+async def abbrechen(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Abgebrochen.")
+    return ConversationHandler.END
+
+# --- ERLEDIGT / NICHT ERLEDIGT ---
 async def erledigt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("Verwendung: /erledigt 5")
